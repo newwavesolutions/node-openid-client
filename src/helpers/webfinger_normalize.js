@@ -1,6 +1,5 @@
-"use strict";
-
 // Credit: https://github.com/rohe/pyoidc/blob/master/src/oic/utils/webfinger.py
+
 // -- Normalization --
 // A string of any other type is interpreted as a URI either the form of scheme
 // "://" authority path-abempty [ "?" query ] [ "#" fragment ] or authority
@@ -27,16 +26,16 @@
 // Note: Since the definition of authority in RFC 3986 [RFC3986] is
 // [ userinfo "@" ] host [ ":" port ], it is legal to have a user input
 // identifier like userinfo@host:port, e.g., alice@example.com:8080.
+
 const PORT = /^\d+$/;
 
 function hasScheme(input) {
   if (input.includes('://')) return true;
-  const authority = input.replace(/(\/|\?)/g, '#').split('#')[0];
 
+  const authority = input.replace(/(\/|\?)/g, '#').split('#')[0];
   if (authority.includes(':')) {
     const index = authority.indexOf(':');
     const hostOrPort = authority.slice(index + 1);
-
     if (!PORT.test(hostOrPort)) {
       return true;
     }
@@ -58,7 +57,6 @@ function normalize(input) {
   }
 
   let output;
-
   if (hasScheme(input)) {
     output = input;
   } else if (acctSchemeAssumed(input)) {

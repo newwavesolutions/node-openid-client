@@ -1,38 +1,14 @@
-"use strict";
-
-function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
-
-function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
-
 /* eslint-disable no-underscore-dangle */
-const url = require('url');
 
-const {
-  format
-} = require('util');
+const url = require('url');
+const { format } = require('util');
 
 const cloneDeep = require('./helpers/deep_clone');
-
-const {
-  RPError,
-  OPError
-} = require('./errors');
-
-const {
-  BaseClient
-} = require('./client');
-
-const {
-  random,
-  codeChallenge
-} = require('./helpers/generators');
-
+const { RPError, OPError } = require('./errors');
+const { BaseClient } = require('./client');
+const { random, codeChallenge } = require('./helpers/generators');
 const pick = require('./helpers/pick');
-
-const {
-  resolveResponseType,
-  resolveRedirectUri
-} = require('./helpers/client');
+const { resolveResponseType, resolveRedirectUri } = require('./helpers/client');
 
 function verified(err, user, info = {}) {
   if (err) {
@@ -43,18 +19,17 @@ function verified(err, user, info = {}) {
     this.success(user, info);
   }
 }
+
 /**
  * @name constructor
  * @api public
  */
-
-
 function OpenIDConnectStrategy({
   client,
   params = {},
   passReqToCallback = false,
   sessionKey,
-  usePKCE = false
+  usePKCE = false,
 } = {}, verify) {
   if (!(client instanceof BaseClient)) {
     throw new TypeError('client must be an instance of openid-client Client');
@@ -78,11 +53,9 @@ function OpenIDConnectStrategy({
 
   if (this._usePKCE === true) {
     const supportedMethods = this._issuer.code_challenge_methods_supported;
-
     if (!Array.isArray(supportedMethods)) {
       throw new TypeError('code_challenge_methods_supported is not properly set on issuer');
     }
-
     if (supportedMethods.includes('S256')) {
       this._usePKCE = 'S256';
     } else if (supportedMethods.includes('plain')) {
@@ -95,31 +68,28 @@ function OpenIDConnectStrategy({
   }
 
   this.name = url.parse(client.issuer.issuer).hostname;
+
   if (!this._params.response_type) this._params.response_type = resolveResponseType.call(client);
   if (!this._params.redirect_uri) this._params.redirect_uri = resolveRedirectUri.call(client);
   if (!this._params.scope) this._params.scope = 'openid';
 }
 
 OpenIDConnectStrategy.prototype.authenticate = function authenticate(req, options) {
-  var _this = this;
-
-  _asyncToGenerator(function* () {
-    const client = _this._client;
-
+  (async () => {
+    const client = this._client;
     if (!req.session) {
       throw new TypeError('authentication requires session support');
     }
-
     const reqParams = client.callbackParams(req);
-    const sessionKey = _this._key;
-    /* start authentication request */
+    const sessionKey = this._key;
 
+    /* start authentication request */
     if (Object.keys(reqParams).length === 0) {
       // provide options object with extra authentication parameters
       const params = {
         state: random(),
-        ..._this._params,
-        ...options
+        ...this._params,
+        ...options,
       };
 
       if (!params.nonce && params.response_type.includes('id_token')) {
@@ -128,44 +98,35 @@ OpenIDConnectStrategy.prototype.authenticate = function authenticate(req, option
 
       req.session[sessionKey] = pick(params, 'nonce', 'state', 'max_age', 'response_type');
 
-      if (_this._usePKCE) {
+      if (this._usePKCE) {
         const verifier = random();
         req.session[sessionKey].code_verifier = verifier;
 
-        switch (_this._usePKCE) {
-          // eslint-disable-line default-case
+        switch (this._usePKCE) { // eslint-disable-line default-case
           case 'S256':
             params.code_challenge = codeChallenge(verifier);
             params.code_challenge_method = 'S256';
             break;
-
           case 'plain':
             params.code_challenge = verifier;
             break;
         }
       }
 
-      _this.redirect(client.authorizationUrl(params));
-
+      this.redirect(client.authorizationUrl(params));
       return;
     }
     /* end authentication request */
 
     /* start authentication response */
 
-
     const session = req.session[sessionKey];
-
     if (Object.keys(session || {}).length === 0) {
       throw new Error(format('did not find expected authorization request details in session, req.session["%s"] is %j', sessionKey, session));
     }
 
     const {
-      state,
-      nonce,
-      max_age: maxAge,
-      code_verifier: codeVerifier,
-      response_type: responseType
+      state, nonce, max_age: maxAge, code_verifier: codeVerifier, response_type: responseType,
     } = session;
 
     try {
@@ -173,30 +134,33 @@ OpenIDConnectStrategy.prototype.authenticate = function authenticate(req, option
     } catch (err) {}
 
     const opts = {
-      redirect_uri: _this._params.redirect_uri,
-      ...options
+      redirect_uri: this._params.redirect_uri,
+      ...options,
     };
+
     const checks = {
       state,
       nonce,
       max_age: maxAge,
       code_verifier: codeVerifier,
-      response_type: responseType
+      response_type: responseType,
     };
-    const tokenset = yield client.callback(opts.redirect_uri, reqParams, checks);
-    const passReq = _this._passReqToCallback;
-    const loadUserinfo = _this._verify.length > (passReq ? 3 : 2) && client.issuer.userinfo_endpoint;
-    const args = [tokenset, verified.bind(_this)];
+
+    const tokenset = await client.callback(opts.redirect_uri, reqParams, checks);
+
+    const passReq = this._passReqToCallback;
+    const loadUserinfo = this._verify.length > (passReq ? 3 : 2) && client.issuer.userinfo_endpoint;
+
+    const args = [tokenset, verified.bind(this)];
 
     if (loadUserinfo) {
       if (!tokenset.access_token) {
         throw new RPError({
           message: 'expected access_token to be returned when asking for userinfo in verify callback',
-          tokenset
+          tokenset,
         });
       }
-
-      const userinfo = yield client.userinfo(tokenset);
+      const userinfo = await client.userinfo(tokenset);
       args.splice(1, 0, userinfo);
     }
 
@@ -204,11 +168,13 @@ OpenIDConnectStrategy.prototype.authenticate = function authenticate(req, option
       args.unshift(req);
     }
 
-    _this._verify(...args);
+    this._verify(...args);
     /* end authentication response */
-
-  })().catch(error => {
-    if (error instanceof OPError && error.error !== 'server_error' && !error.error.startsWith('invalid') || error instanceof RPError) {
+  })().catch((error) => {
+    if (
+      (error instanceof OPError && error.error !== 'server_error' && !error.error.startsWith('invalid'))
+      || error instanceof RPError
+    ) {
       this.fail(error);
     } else {
       this.error(error);

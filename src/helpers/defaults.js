@@ -1,6 +1,5 @@
-"use strict";
-
 /* eslint-disable no-restricted-syntax, no-continue */
+
 const isPlainObject = require('./is_plain_object');
 
 function defaults(deep, target, ...sources) {
@@ -8,13 +7,11 @@ function defaults(deep, target, ...sources) {
     if (!isPlainObject(source)) {
       continue;
     }
-
     for (const [key, value] of Object.entries(source)) {
       /* istanbul ignore if */
       if (key === '__proto__' || key === 'constructor') {
         continue;
       }
-
       if (typeof target[key] === 'undefined' && typeof value !== 'undefined') {
         target[key] = value;
       }

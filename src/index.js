@@ -1,28 +1,11 @@
-"use strict";
-
 const Issuer = require('./issuer');
-
-const {
-  OPError,
-  RPError
-} = require('./errors');
-
+const { OPError, RPError } = require('./errors');
 const Registry = require('./issuer_registry');
-
 const Strategy = require('./passport_strategy');
-
 const TokenSet = require('./token_set');
-
-const {
-  CLOCK_TOLERANCE,
-  HTTP_OPTIONS
-} = require('./helpers/consts');
-
+const { CLOCK_TOLERANCE, HTTP_OPTIONS } = require('./helpers/consts');
 const generators = require('./helpers/generators');
-
-const {
-  setDefaults
-} = require('./helpers/request');
+const { setDefaults } = require('./helpers/request');
 
 module.exports = {
   Issuer,
@@ -31,12 +14,12 @@ module.exports = {
   TokenSet,
   errors: {
     OPError,
-    RPError
+    RPError,
   },
   custom: {
     setHttpOptionsDefaults: setDefaults,
     http_options: HTTP_OPTIONS,
-    clock_tolerance: CLOCK_TOLERANCE
+    clock_tolerance: CLOCK_TOLERANCE,
   },
-  generators
+  generators,
 };

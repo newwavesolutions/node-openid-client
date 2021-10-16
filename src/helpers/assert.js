@@ -1,7 +1,6 @@
-"use strict";
-
 function assertSigningAlgValuesSupport(endpoint, issuer, properties) {
   if (!issuer[`${endpoint}_endpoint`]) return;
+
   const eam = `${endpoint}_endpoint_auth_method`;
   const easa = `${endpoint}_endpoint_auth_signing_alg`;
   const easavs = `${endpoint}_endpoint_auth_signing_alg_values_supported`;
@@ -19,5 +18,5 @@ function assertIssuerConfiguration(issuer, endpoint) {
 
 module.exports = {
   assertSigningAlgValuesSupport,
-  assertIssuerConfiguration
+  assertIssuerConfiguration,
 };

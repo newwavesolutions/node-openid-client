@@ -1,16 +1,9 @@
-"use strict";
-
 const url = require('url');
+const { strict: assert } = require('assert');
 
-const {
-  strict: assert
-} = require('assert');
-
-module.exports = target => {
+module.exports = (target) => {
   try {
-    const {
-      protocol
-    } = new url.URL(target);
+    const { protocol } = new url.URL(target);
     assert(protocol.match(/^(https?:)$/));
     return true;
   } catch (err) {
